@@ -130,11 +130,14 @@ dsm_var_gam <- function(dsm.obj, pred.data, off.set,
 
   # "'vpred' is the covariance of all the summary-things." - MVB
   # so we want the diagonals if length(pred.data)>1
-  # A B A^tr
-  vpred <- dpred.db %**% tcrossprod(vcov(dsm.obj), dpred.db)
-
-  if(is.matrix(vpred)){
-    vpred <- diag(vpred)
+  # avoid forming the full length(pred.data) x length(pred.data) matrix
+  # (which OOMs for large numbers of prediction regions) -- diag(A %*% B %*%
+  # t(A)) == rowSums((A %*% B) * A)
+  Vb <- vcov(dsm.obj)
+  if(nrow(dpred.db) > 1){
+    vpred <- rowSums((dpred.db %*% Vb) * dpred.db)
+  }else{
+    vpred <- as.numeric(dpred.db %*% tcrossprod(Vb, dpred.db))
   }
 
   result <- list(pred.var       = vpred,
