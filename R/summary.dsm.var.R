@@ -153,14 +153,10 @@ summary.dsm.var <- function(object, alpha=0.05, boxplot.coef=1.5,
       sinfo$se <- sqrt(object$pred.var)
     }else{
       # re run the variance calculation, putting everything together
-      pd <- c()
-      off <- c()
-      for(i in seq_len(length(object$pred.data))){
-        pd <- rbind(pd, object$pred.data[[i]])
-        off <- rbind(off, object$off.set[[i]])
-      }
-      object$pred.data <- pd
-      object$off.set <- as.vector(off)
+      # (do.call once instead of rbind-in-loop: avoids O(n^2) copies when
+      # there are many prediction regions)
+      object$pred.data <- do.call(rbind, object$pred.data)
+      object$off.set <- as.vector(do.call(rbind, object$off.set))
 
       if(object$var.prop){
         var.prop <- dsm_var_prop(object$dsm.obj, object$pred.data,
